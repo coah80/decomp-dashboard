@@ -3,14 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Minecraft LCE Decomp — Live Progress</title>
+<meta name="description" content="Live progress tracker for the Minecraft LCE Switch v1.0.17 decompilation effort">
+<meta property="og:title" content="Minecraft LCE Decomp — Live Progress">
+<meta property="og:description" content="Real-time matching decompilation progress">
+<meta name="theme-color" content="#8b5cf6">
+<title>Minecraft LCE Decomp — Live</title>
 <style>
 :root {
   --bg: #0a0e1a;
   --bg2: #0f1420;
   --bg3: #1a1f30;
+  --bg4: #232838;
   --fg: #e8eaed;
   --fg-dim: #8b95a8;
+  --fg-dim2: #5a6478;
   --accent: #8b5cf6;
   --accent2: #06b6d4;
   --green: #10b981;
@@ -20,12 +26,13 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: -apple-system, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
   background: var(--bg);
   color: var(--fg);
   min-height: 100vh;
-  padding: 2rem;
-  line-height: 1.5;
+  padding: 2rem 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 .container { max-width: 1200px; margin: 0 auto; }
 header {
@@ -123,20 +130,67 @@ h1 .accent { color: var(--accent); }
 .report {
   background: var(--bg3);
   border-left: 3px solid var(--accent);
-  border-radius: 4px;
-  padding: 1rem;
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
   margin-bottom: 0.75rem;
-  font-size: 0.875rem;
+  transition: background 0.15s;
 }
-.report-time {
+.report:hover { background: var(--bg4); }
+.report-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   color: var(--fg-dim);
-  font-size: 0.75rem;
-  margin-bottom: 0.25rem;
+  font-size: 0.7rem;
+  margin-bottom: 0.5rem;
+  font-family: 'SF Mono', Menlo, monospace;
+  flex-wrap: wrap;
+}
+.report-pct {
+  color: var(--accent);
+  font-weight: 700;
+  background: rgba(139, 92, 246, 0.15);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
 }
 .report-content {
-  white-space: pre-wrap;
-  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: var(--fg);
 }
+.report-content h1, .report-content h2, .report-content h3 {
+  color: var(--accent);
+  font-weight: 700;
+  margin: 0.85em 0 0.4em;
+}
+.report-content h1 { font-size: 1.1rem; }
+.report-content h2 { font-size: 1rem; }
+.report-content h3 { font-size: 0.9rem; }
+.report-content h1:first-child, .report-content h2:first-child, .report-content h3:first-child { margin-top: 0; }
+.report-content p { margin: 0.5em 0; }
+.report-content ul, .report-content ol { margin: 0.4em 0 0.6em 1.25em; }
+.report-content li { margin: 0.2em 0; }
+.report-content strong { color: #fff; font-weight: 700; }
+.report-content code {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--accent);
+  padding: 0.1em 0.4em;
+  border-radius: 3px;
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 0.85em;
+}
+.toggle-reports {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--fg-dim);
+  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.toggle-reports:hover { border-color: var(--accent); color: var(--accent); }
 .quality-breakdown {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -226,8 +280,17 @@ h1 .accent { color: var(--accent); }
 </div>
 
 <div class="section">
-<h2>Latest Reports</h2>
-<div id="reports">Loading...</div>
+<h2>Latest Report</h2>
+<div id="latest-report" class="report-content">Loading...</div>
+<div id="latest-time" style="color:var(--fg-dim);font-size:0.7rem;margin-top:0.75rem;font-family:'SF Mono',Menlo,monospace;"></div>
+</div>
+
+<div class="section">
+<h2 style="display:flex;align-items:center;justify-content:space-between;">
+<span>Past Reports (<span id="report-count">0</span>)</span>
+<button class="toggle-reports" id="toggle-btn" type="button" onclick="togglePastReports()">Show all</button>
+</h2>
+<div id="past-reports"></div>
 </div>
 
 <div class="footer">
@@ -236,15 +299,44 @@ Reference project: <a href="https://github.com/GRAnimated/MinecraftLCE">GRAnimat
 </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
+let pastShown = false;
+
+function fmtTime(iso) {
+  if (!iso) return '—';
+  try { return new Date(iso).toLocaleString(); } catch { return iso; }
+}
+
+function fmtRelative(iso) {
+  if (!iso) return '';
+  try {
+    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (diff < 60) return diff + 's ago';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+  } catch { return ''; }
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderMd(text) {
+  if (!text) return '';
+  try { return marked.parse(text); }
+  catch { return '<pre>' + escapeHtml(text) + '</pre>'; }
+}
+
 async function loadData() {
   try {
-    const res = await fetch('progress.json?' + Date.now());
-    const data = await res.json();
-    update(data);
-  } catch (e) {
-    console.error('Failed to load progress:', e);
-  }
+    const res = await fetch('progress.json?t=' + Date.now());
+    if (!res.ok) throw new Error('fetch failed');
+    update(await res.json());
+  } catch (e) { console.error('Failed:', e); }
 }
 
 function update(data) {
@@ -256,29 +348,83 @@ function update(data) {
   document.getElementById('stat-matched').textContent = (data.matched || 0).toLocaleString();
   document.getElementById('stat-remaining').textContent = ((data.total || 0) - (data.matched || 0)).toLocaleString();
   document.getElementById('stat-perfect').textContent = (data.perfect || 0).toLocaleString();
-  document.getElementById('stat-updated').textContent = new Date(data.updated || Date.now()).toLocaleString();
+  document.getElementById('stat-updated').textContent = fmtRelative(data.updated);
 
   // Quality breakdown
   const qb = document.getElementById('quality-breakdown');
   qb.innerHTML = '';
   const buckets = data.quality || {};
   for (const [k, v] of Object.entries(buckets)) {
-    qb.innerHTML += `<div class="quality-bar"><div class="quality-name">${k}</div><div class="quality-count">${v.toLocaleString()}</div></div>`;
+    const item = document.createElement('div');
+    item.className = 'quality-bar';
+    const name = document.createElement('div');
+    name.className = 'quality-name';
+    name.textContent = k;
+    const count = document.createElement('div');
+    count.className = 'quality-count';
+    count.textContent = v.toLocaleString();
+    item.appendChild(name);
+    item.appendChild(count);
+    qb.appendChild(item);
   }
 
-  // Reports
-  const r = document.getElementById('reports');
-  if (data.reports && data.reports.length) {
-    r.innerHTML = data.reports.slice(0, 5).map(rp =>
-      `<div class="report"><div class="report-time">${new Date(rp.timestamp).toLocaleString()} · ${rp.percent.toFixed(2)}% (${rp.matched} matched)</div><div class="report-content">${rp.content}</div></div>`
-    ).join('');
+  // Latest report
+  const reports = data.reports || [];
+  document.getElementById('report-count').textContent = reports.length;
+
+  const latest = document.getElementById('latest-report');
+  const latestTime = document.getElementById('latest-time');
+  if (reports.length > 0) {
+    latest.innerHTML = renderMd(reports[0].content || '');
+    latestTime.textContent = fmtTime(reports[0].timestamp);
   } else {
-    r.textContent = 'No reports yet.';
+    latest.textContent = 'No reports yet.';
+    latestTime.textContent = '';
+  }
+
+  // Past reports
+  const past = document.getElementById('past-reports');
+  past.innerHTML = '';
+  if (reports.length > 1) {
+    const list = pastShown ? reports.slice(1) : reports.slice(1, 4);
+    for (const r of list) {
+      const div = document.createElement('div');
+      div.className = 'report';
+
+      const meta = document.createElement('div');
+      meta.className = 'report-meta';
+      const pctSpan = document.createElement('span');
+      pctSpan.className = 'report-pct';
+      pctSpan.textContent = (r.percent || 0).toFixed(2) + '%';
+      const matchedSpan = document.createElement('span');
+      matchedSpan.textContent = (r.matched || 0).toLocaleString() + ' matched';
+      const timeSpan = document.createElement('span');
+      timeSpan.textContent = fmtTime(r.timestamp);
+      meta.appendChild(pctSpan);
+      meta.appendChild(matchedSpan);
+      meta.appendChild(timeSpan);
+
+      const content = document.createElement('div');
+      content.className = 'report-content';
+      content.innerHTML = renderMd(r.content || '');
+
+      div.appendChild(meta);
+      div.appendChild(content);
+      past.appendChild(div);
+    }
+  } else {
+    past.innerHTML = '<div style="color:var(--fg-dim);font-size:0.75rem;padding:0.5rem 0;">No past reports yet.</div>';
   }
 }
 
+function togglePastReports() {
+  pastShown = !pastShown;
+  document.getElementById('toggle-btn').textContent = pastShown ? 'Show less' : 'Show all';
+  loadData();
+}
+
 loadData();
-setInterval(loadData, 10000);  // refresh every 10s
+setInterval(loadData, 10000);
 </script>
 </body>
 </html>
