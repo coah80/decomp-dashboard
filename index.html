@@ -4,29 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Live progress tracker for the Minecraft LCE Switch v1.0.17 decompilation effort">
-<meta property="og:title" content="Minecraft LCE Decomp — Live Progress">
+<meta property="og:title" content="Minecraft LCE Decomp: Live progress">
 <meta property="og:description" content="Real-time matching decompilation progress">
 <meta name="theme-color" content="#8b5cf6">
 <title>Minecraft LCE Decomp — Live</title>
 <style>
 :root {
-  --bg: #0a0e1a;
-  --bg2: #0f1420;
-  --bg3: #1a1f30;
-  --bg4: #232838;
-  --fg: #e8eaed;
-  --fg-dim: #8b95a8;
-  --fg-dim2: #5a6478;
-  --accent: #8b5cf6;
-  --accent2: #06b6d4;
-  --green: #10b981;
+  color-scheme: light dark;
+  --bg: light-dark(#ffffff, #0a0e1a);
+  --bg2: light-dark(#eeeeee, #0f1420);
+  --bg3: light-dark(#eeeeee, #1a1f30);
+  --bg4: light-dark(#eeeeee, #232838);
+  --fg: light-dark(#00000, #e8eaed);
+  --fg-dim: light-dark(#222222, #8b95a8);
+  --fg-dim2: light-dark(#444444, #5a6478);
+  --accent: light-dark(#000000, #8b5cf6);
+  
+  --accent2: light-dark(#000000, #06b6d4);
+  --green: light-dark(#007F00, #10b981);
   --yellow: #f59e0b;
   --red: #ef4444;
-  --border: #1f2937;
+  --border: #000000;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  font-family: sans-serif;
   background: var(--bg);
   color: var(--fg);
   min-height: 100vh;
@@ -52,9 +54,8 @@ h1 .accent { color: var(--accent); }
   margin-top: 0.25rem;
 }
 .hero {
-  background: linear-gradient(135deg, var(--bg2), var(--bg3));
+  background: var(--bg3);
   border: 1px solid var(--border);
-  border-radius: 16px;
   padding: 3rem 2rem;
   text-align: center;
   margin-bottom: 2rem;
@@ -62,7 +63,8 @@ h1 .accent { color: var(--accent); }
 .percent {
   font-size: 5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  background: var(--accent2);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: -0.03em;
@@ -70,22 +72,18 @@ h1 .accent { color: var(--accent); }
 .percent-label {
   color: var(--fg-dim);
   font-size: 0.875rem;
-  text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-top: 0.5rem;
 }
 .progress-bar {
   height: 8px;
   background: var(--bg3);
-  border-radius: 4px;
   overflow: hidden;
   margin: 2rem 0 1rem;
 }
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-  border-radius: 4px;
-  transition: width 0.5s ease;
+  background: var(--accent2);
 }
 .stats {
   display: grid;
@@ -96,13 +94,11 @@ h1 .accent { color: var(--accent); }
 .stat {
   background: var(--bg2);
   border: 1px solid var(--border);
-  border-radius: 12px;
   padding: 1.25rem;
 }
 .stat-label {
   color: var(--fg-dim);
   font-size: 0.75rem;
-  text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 .stat-value {
@@ -116,13 +112,11 @@ h1 .accent { color: var(--accent); }
 .section {
   background: var(--bg2);
   border: 1px solid var(--border);
-  border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
 }
 .section h2 {
   font-size: 1rem;
-  text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--fg-dim);
   margin-bottom: 1rem;
@@ -130,10 +124,8 @@ h1 .accent { color: var(--accent); }
 .report {
   background: var(--bg3);
   border-left: 3px solid var(--accent);
-  border-radius: 6px;
   padding: 1rem 1.25rem;
   margin-bottom: 0.75rem;
-  transition: background 0.15s;
 }
 .report:hover { background: var(--bg4); }
 .report-meta {
@@ -143,7 +135,6 @@ h1 .accent { color: var(--accent); }
   color: var(--fg-dim);
   font-size: 0.7rem;
   margin-bottom: 0.5rem;
-  font-family: 'SF Mono', Menlo, monospace;
   flex-wrap: wrap;
 }
 .report-pct {
@@ -151,7 +142,6 @@ h1 .accent { color: var(--accent); }
   font-weight: 700;
   background: rgba(139, 92, 246, 0.15);
   padding: 0.15rem 0.5rem;
-  border-radius: 4px;
 }
 .report-content {
   font-size: 0.875rem;
@@ -175,8 +165,6 @@ h1 .accent { color: var(--accent); }
   background: rgba(139, 92, 246, 0.15);
   color: var(--accent);
   padding: 0.1em 0.4em;
-  border-radius: 3px;
-  font-family: 'SF Mono', Menlo, monospace;
   font-size: 0.85em;
 }
 .toggle-reports {
@@ -185,10 +173,8 @@ h1 .accent { color: var(--accent); }
   color: var(--fg-dim);
   font-size: 0.75rem;
   padding: 0.4rem 0.8rem;
-  border-radius: 6px;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.15s;
 }
 .toggle-reports:hover { border-color: var(--accent); color: var(--accent); }
 .quality-breakdown {
@@ -198,13 +184,11 @@ h1 .accent { color: var(--accent); }
 }
 .quality-bar {
   background: var(--bg3);
-  border-radius: 8px;
   padding: 0.75rem;
 }
 .quality-name {
   color: var(--fg-dim);
   font-size: 0.7rem;
-  text-transform: uppercase;
 }
 .quality-count {
   font-size: 1.25rem;
@@ -216,13 +200,7 @@ h1 .accent { color: var(--accent); }
   width: 8px;
   height: 8px;
   background: var(--green);
-  border-radius: 50%;
   margin-right: 0.5rem;
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
 }
 .footer {
   text-align: center;
@@ -239,13 +217,13 @@ h1 .accent { color: var(--accent); }
 <body>
 <div class="container">
 <header>
-<h1>Minecraft <span class="accent">LCE</span> Decompilation</h1>
+<h1>Minecraft LCE Decompilation</h1>
 <div class="subtitle">Nintendo Switch v1.0.17 — Matching decompilation to native C++</div>
 </header>
 
 <div class="hero">
 <div class="percent" id="percent">--%</div>
-<div class="percent-label"><span class="live-dot"></span>Live Progress</div>
+<div class="percent-label"><span class="live-dot"></span>Live progress</div>
 <div class="progress-bar">
 <div class="progress-fill" id="progress-bar" style="width: 0%"></div>
 </div>
@@ -268,19 +246,19 @@ h1 .accent { color: var(--accent); }
 <div class="stat-value green" id="stat-perfect">--</div>
 </div>
 <div class="stat">
-<div class="stat-label">Last Update</div>
+<div class="stat-label">Last update</div>
 <div class="stat-value" id="stat-updated" style="font-size: 0.875rem">--</div>
 </div>
 </div>
 
 <div class="section">
-<h2>Match Quality Breakdown</h2>
+<h2>Match quality breakdown</h2>
 <div class="quality-breakdown" id="quality-breakdown">
 </div>
 </div>
 
 <div class="section">
-<h2>Latest Report</h2>
+<h2>Latest report</h2>
 <div id="latest-report" class="report-content">Loading...</div>
 <div id="latest-time" style="color:var(--fg-dim);font-size:0.7rem;margin-top:0.75rem;font-family:'SF Mono',Menlo,monospace;"></div>
 </div>
